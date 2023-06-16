@@ -1,3 +1,11 @@
+// function openFile() {
+// 	var fileInput = document.getElementById('file-input').value;
+// 	message_to_server['file'] = fileInput;
+// 	// websocket.send(JSON.stringify(message_to_server));
+// 	// fileInput.click();
+// 	// console.log(fileInput);
+// };
+
 function zoom(event) {
 	if (event.deltaY < 0) {
 		zoom_level = Math.max(zoom_level/2, 1/4)
@@ -275,7 +283,7 @@ var zoom_level, temp_img, temp_x, temp_y;
 
 // Send the input to the backend
 websocket.onopen = function () {
-
+	
 	websocket.send(JSON.stringify(message_to_server));
 	console.log("Hi moron, server is connected!");
 	message_to_server['greeting'] = 'I say good-bye.';
@@ -284,7 +292,7 @@ websocket.onopen = function () {
 
 
 // Receive the output from the backend
-websocket.onmessage = async function (event) {
+websocket.onmessage = function (event) {
 
 	var output = JSON.parse(event.data);
 
@@ -292,7 +300,7 @@ websocket.onmessage = async function (event) {
 		hoverInfo = document.getElementById('hoverinfo'),
 		slider = document.getElementById("myRange"),
 		i_ch = document.getElementById("rangeValue");
-
+	
 	
 	zoom_level = output.zoom_level;
 	slider.max = output.data_size[2] - 1;
@@ -346,15 +354,19 @@ websocket.onmessage = async function (event) {
 	Image.on('plotly_click', function (data) {
 		var pix_x = data.points[0].pointIndex[1];
 		var pix_y = data.points[0].pointIndex[0];
-		console.log(pix_x, pix_y);
-		if (message_to_server['cen_pix'][0] != pix_x
-			|| message_to_server['cen_pix'][1] != pix_y) {
+		message_to_server['cen_pix'][0] = output.raw_xpix;
+		message_to_server['cen_pix'][1] = output.raw_ypix;
+
+		if (message_to_server['cen_pix'][0] != output.cen_pix[0]
+			|| message_to_server['cen_pix'][1] != output.cen_pix[1]) {
+
 			message_to_server['cursor_x'] = pix_x;
 			message_to_server['cursor_y'] = pix_y;
 			message_to_server['updates'] = ['center'];
 			websocket.send(JSON.stringify(message_to_server));
 		};
-	});''
+	});
+
 	
 
 	Image.onwheel = zoom;
@@ -401,4 +413,5 @@ websocket.onmessage = async function (event) {
 // 		// Perform further actions with the selected file
 // 	});
 // }
+
 

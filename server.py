@@ -9,12 +9,12 @@ import scipy as sp
 import skimage
 
 
+filename = input('Enter fits file:')
+
 def json_serializer(obj):
 	if isinstance(obj, np.ndarray):
 		return obj.tolist()
 	return obj
-
-
 
 class init():
 	def __init__(self):
@@ -23,11 +23,11 @@ class init():
 		self.canvas00_size = [500, 400]
 		
 
-		filename = '../alma_data/2015.1.00551/member.uid___A001_X2fa_X138.HLTau_HCOplus.fits'
+		# print(filename)
+		# filename = '../alma_data/2015.1.00551/member.uid___A001_X2fa_X138.HLTau_HCOplus.fits'
 		# filename = '../alma_data/2019.1.00847/member.uid___A001_X1467' +\
-			# '_X264.04288p1802_sci.spw16.cube.I.pbcor.fits'
+		# 	'_X264.04288p1802_sci.spw16.cube.I.pbcor.fits'
 		# filename = '../alma_data/2015.1.00956/member.uid___A001_X2fb_X2af.n4303_CO21.pbcor.fits'
-		# filename = filename
 		fitsfile = fits.open(filename)
 		self.header = fitsfile[0].header
 		self.img_cube = fitsfile[0].data
@@ -130,7 +130,7 @@ class init():
 
 		self.cen_pix = [int(self.raw_cen_pix[0]*self.zoom_level), 
 							int(self.raw_cen_pix[1]*self.zoom_level)]
-		print(self.zoom_level, self.raw_cen_pix, self.cen_pix)
+		# print(self.zoom_level, self.raw_cen_pix, self.cen_pix)
 
 		self.center = [self.img_x[self.cen_pix[0]], 
 						self.img_y[self.cen_pix[1]]]
@@ -216,8 +216,9 @@ class init():
 		self.x_pix = int((self.cen_pix[0] - xx + self.cursor_x))
 		self.y_pix = int((self.cen_pix[1] - yy + self.cursor_y))
 
-		self.raw_x_pix = int(self.x_pix/self.zoom_level)
+		self.raw_x_pix = int(self.x_pix/self.zoom_level - 1)
 		self.raw_y_pix = int(self.y_pix/self.zoom_level)
+		# print(self.zoom_level, self.raw_x_pix, self.raw_y_pix)
 
 
 
@@ -237,14 +238,17 @@ class init():
 
 	def update_prof(self, axis='x'):
 		
-		if axis == 'x':
-			self.prof_x = self.img_cube[0, self.i_ch, self.raw_y_pix, :]
+		if (self.raw_x_pix < self.raw_img_size[0]) \
+			& (self.raw_y_pix < self.raw_img_size[1]):
 
-		if axis == 'y':
-			self.prof_y = self.img_cube[0, self.i_ch, :, self.raw_x_pix]
+			if axis == 'x':
+				self.prof_x = self.img_cube[0, self.i_ch, self.raw_y_pix, :]
 
-		if axis == 'z':
-			self.prof_z = self.img_cube[0,:, self.raw_y_pix, self.raw_x_pix]
+			if axis == 'y':
+				self.prof_y = self.img_cube[0, self.i_ch, :, self.raw_x_pix]
+
+			if axis == 'z':
+				self.prof_z = self.img_cube[0,:, self.raw_y_pix, self.raw_x_pix]
 
 
 
@@ -354,7 +358,6 @@ async def handler(websocket):
 					App.update_prof(axis='z')
 					App.update_prof_range()
 					message_out = create_message(App, ['prof_x', 'prof_y', 'prof_z'])
-
 					await websocket.send(message_out)
 
 
@@ -370,8 +373,8 @@ async def handler(websocket):
 
 
 				if update == 'center':
-					if 	(App.raw_cen_pix[0] != App.raw_x_pix) \
-						| (App.raw_cen_pix[1] != App.raw_y_pix):
+					if 	(App.disp_raw_cen_pix[0] != App.raw_x_pix) \
+						| (App.disp_raw_cen_pix[1] != App.raw_y_pix):
 						App.fits_info()
 						App.update_disp_center()
 						App.update_cen_pix()
