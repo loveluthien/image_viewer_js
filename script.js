@@ -270,6 +270,7 @@ function prof_z_show(output) {
 
 const websocket = new WebSocket("ws://localhost:9107/");
 
+// default message
 var message_to_server = {
 	'greeting': 'Hello kitty?',
 	'i_ch': 0,
@@ -301,7 +302,7 @@ websocket.onmessage = function (event) {
 		slider = document.getElementById("myRange"),
 		i_ch = document.getElementById("rangeValue");
 	
-	
+	// load some default variables
 	zoom_level = output.zoom_level;
 	slider.max = output.data_size[2] - 1;
 	i_ch.innerHTML = slider.value;
@@ -309,8 +310,8 @@ websocket.onmessage = function (event) {
 	message_to_server['zoom_level'] = zoom_level;
 
 
+	// update panels
 	for (var field in output) {
-
 		if (field == 'img') {
 			img_show(output);
 			temp_img = output.img.data;
@@ -324,7 +325,7 @@ websocket.onmessage = function (event) {
 	}
 
 
-
+	// showing image pixel index and its intensity on cursor position
 	Image.on('plotly_hover', function (data) {
 		var pix_x = data.points[0].pointIndex[1];
 		var pix_y = data.points[0].pointIndex[0];
@@ -351,6 +352,7 @@ websocket.onmessage = function (event) {
 		};
 	});
 
+	// move the image center by clicking
 	Image.on('plotly_click', function (data) {
 		var pix_x = data.points[0].pointIndex[1];
 		var pix_y = data.points[0].pointIndex[0];

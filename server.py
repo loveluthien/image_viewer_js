@@ -8,7 +8,7 @@ import numpy as np
 import scipy as sp
 import skimage
 
-
+## load server side file
 filename = input('Enter fits file:')
 
 def json_serializer(obj):
@@ -33,12 +33,8 @@ class init():
 		self.img_cube = fitsfile[0].data
 		fitsfile.close()
 
-		
-
-
-		# self.fits_info()
+		## initialize some variables
 		self.raw_img_size = self.img_cube[0,0,:,:].shape
-
 		self.i_ch = 0
 		self.cursor_x = 0
 		self.cursor_y = 0
@@ -46,7 +42,7 @@ class init():
 		self.raw_y_pix = 0
 		# self.Intensity = 0
 
-
+		## initialize image, histogram and profiles
 		self.default_img()
 		self.update_img()
 		self.update_img_range()
@@ -91,6 +87,7 @@ class init():
 
 
 	def fits_info(self):
+		'''load necessary information for WCS'''
 
 		# self.zoom_level = 1
 
@@ -109,6 +106,7 @@ class init():
 										hh['NAXIS2']*self.zoom_level, 
 										hh['NAXIS3']]
 		
+		## use WCS for coordinates
 		self.img_xy = self.wcs_info.pixel_to_world_values(
 							np.arange(self.wcs_info.array_shape[0]), 
 							np.arange(self.wcs_info.array_shape[1]), 0)
@@ -116,10 +114,12 @@ class init():
 		img_z = self.wcs_info.pixel_to_world_values(0, 0, np.arange(hh['NAXIS3']))
 		img_z = np.array(img_z)/1e9 # Hz to GHz
 
+		## x,y and z coordinates
 		self.img_x = self.img_xy[0, :]
 		self.img_y = self.img_xy[1, :]
 		self.img_z = img_z[2,:]
 
+		## pixel information for image and profiles
 		prof_pix_fac = max(1, self.zoom_level)
 		self.x_pix_list = np.arange(hh['NAXIS1']*prof_pix_fac)
 		self.y_pix_list = np.arange(hh['NAXIS2']*prof_pix_fac)
@@ -132,6 +132,7 @@ class init():
 							int(self.raw_cen_pix[1]*self.zoom_level)]
 		# print(self.zoom_level, self.raw_cen_pix, self.cen_pix)
 
+		## WCS coordinates of image center 
 		self.center = [self.img_x[self.cen_pix[0]], 
 						self.img_y[self.cen_pix[1]]]
 
@@ -158,6 +159,7 @@ class init():
 
 
 	def clip_img(self):
+		'''To efficient transfering data, clip the image with the window size'''
 
 		if (self.img_size[0] > self.canvas00_size[0]) \
 			| (self.img_size[1] > self.canvas00_size[1]):
@@ -192,11 +194,13 @@ class init():
 
 
 	def update_hist(self):
+
 		ch_slice = self.img_cube[0,self.i_ch,:,:].flat[:]
 		bins = np.linspace(np.nanmin(ch_slice), np.nanmax(ch_slice), self.hist_bin_num+1)
 		self.hist_data, temp = np.histogram(ch_slice, bins=bins)
 		self.hist_x = (bins[1:] + bins[:-1])/2
 
+		## estimate the 99% data boundary
 		self.data_percent = 99 # %
 		self.vmax = np.nanpercentile(ch_slice.flat[:], 
 										50 + self.data_percent/2 )
